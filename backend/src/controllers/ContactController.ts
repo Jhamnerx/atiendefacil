@@ -18,7 +18,6 @@ import SimpleListService, {
 } from "../services/ContactServices/SimpleListService";
 import ContactCustomField from "../models/ContactCustomField";
 import { logger } from "../utils/logger";
-import ToggleDisableBotContactService from "../services/ContactServices/ToggleDisableBotContactService";
 
 type IndexQuery = {
   searchParam: string;
@@ -87,9 +86,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(contact);
 };
 
-export const storeUpload = async (req: Request, res: Response) : Promise<Response> => {
-
-  const {companyId} = req.user;
+export const storeUpload = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
   const contacts = req.body;
 
   let errorBag = [];
@@ -102,22 +100,24 @@ export const storeUpload = async (req: Request, res: Response) : Promise<Respons
 
   const promises = contacts.map(async contact => {
 
-    const newContact : ContactData = {name: contact.Nome, number: contact.Telefone.replace(/\D/g, '')}
+    const newContact: ContactData = {
+      name: String(contact.Nome),
+      number: String(contact.Telefone).replace(/\D/g, '')
+    };
 
-    try{
-
-      const contact = await createUploadedContact( newContact, companyId, schema )
-      contactAdded.push( {contactName: contact.name, contactId: contact.id} );
-
-    }catch(e){
-      errorBag.push({contactName: contact.Nome, error: e || e.message});
+    try {
+      const contact = await createUploadedContact(newContact, companyId, schema);
+      contactAdded.push({ contactName: contact.name, contactId: contact.id });
+    } catch (e) {
+      errorBag.push({ contactName: contact.Nome, error: e || e.message });
     }
   });
 
   await Promise.all(promises);
 
-  return res.status(200).json({newContacts: contactAdded, errorBag: errorBag});
-}
+  return res.status(200).json({ newContacts: contactAdded, errorBag: errorBag });
+};
+
 
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { contactId } = req.params;
@@ -265,18 +265,3 @@ const createUploadedContact = async ( newContact : ContactData, companyId : numb
 
   return contact;
 }
-
-export const toggleDisableBot = async (req: Request, res: Response): Promise<Response> => {
-  var { contactId } = req.params;
-  const { companyId } = req.user;
-  const contact = await ToggleDisableBotContactService({ contactId });
-
-  const io = getIO();
-  io.of(String(companyId))
-    .emit(`company-${companyId}-contact`, {
-      action: "update",
-      contact
-    });
-
-  return res.status(200).json(contact);
-};

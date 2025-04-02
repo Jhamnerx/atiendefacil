@@ -3,7 +3,7 @@ import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 import Whatsapp from "../../models/Whatsapp";
 
-export interface MessageData {
+interface MessageData {
   id: string;
   ticketId: number;
   body: string;
